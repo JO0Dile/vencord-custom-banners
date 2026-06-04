@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vencord Custom Banners Gateway</title>
+</head>
+<body>
+    <script>
+        // هذا الكود يستقبل طلبات البانرات من الإضافة ويمررها لـ Firebase فوراً في الخلفية
+        const FIREBASE_URL = "https://firebasedatabase.app";
+
+        async function handleGateway() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get("userId");
+            const bannerUrl = urlParams.get("bannerUrl");
+            const action = urlParams.get("action");
+
+            if (!userId) return;
+
+            const dbUrl = `${FIREBASE_URL}/${userId}.json`;
+
+            // 1. وضع رابط البانر تلقائياً (PUT / Update)
+            if (action === "set" && bannerUrl) {
+                await fetch(dbUrl, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url: bannerUrl })
+                });
+            } 
+            // 2. جلب رابط البانر تلقائياً (GET / Fetch)
+            else if (action === "get") {
+                const res = await fetch(dbUrl);
+                const data = await res.json();
+                window.parent.postMessage({ type: "BANNER_RESPONSE", userId, data }, "*");
+            }
+        }
+        handleGateway();
+    </script>
+</body>
+</html>
